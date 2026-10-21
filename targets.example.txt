@@ -1,0 +1,3 @@
+# One authorized HTTP(S) target per line.
+https://app.example.test/
+https://admin.example.test/status
