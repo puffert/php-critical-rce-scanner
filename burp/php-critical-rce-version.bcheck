@@ -1,0 +1,21 @@
+metadata:
+    language: v2-beta
+    name: "PHP critical RCE version exposure (2026-10-21)"
+    description: "Passively detects disclosed PHP versions affected by CVE-2026-109618 and CVE-2026-109619. It sends no extra requests and does not attempt exploitation."
+    author: "OpenAI Codex"
+    tags: "php", "passive", "cve-2026-109618", "cve-2026-109619"
+
+given response then
+    if {latest.response} matches "(?i)PHP(?:\\s+Version|[/\\s:])\\s*(?:[5-7]\\.[0-9]+\\.[0-9]+|8\\.[01]\\.[0-9]+|8\\.2\\.(?:[0-9]|[12][0-9]|3[0-4])(?:[^0-9]|$)|8\\.3\\.(?:[0-9]|[12][0-9]|3[0-5])(?:[^0-9]|$)|8\\.4\\.(?:[0-9]|1[0-9]|2[0-6])(?:[^0-9]|$)|8\\.5\\.(?:[0-9]|1[01])(?:[^0-9]|$)|8\\.6\\.0(?:[-._]?(?:alpha|beta)[-._]?[0-9]+|[-._]?RC[-._]?[0-3])(?:[^0-9]|$))" then
+        report issue:
+            severity: high
+            confidence: firm
+            detail: "The response discloses a PHP version in an upstream range affected by CVE-2026-109618 and CVE-2026-109619. These critical flaws can allow unauthenticated remote code execution. This is a passive version check; confirm the installed package and any vendor backport on the server."
+            remediation: "Update immediately to PHP 8.2.35, 8.3.36, 8.4.27, 8.5.12, or a vendor package that explicitly backports both fixes. PHP 8.1 and older are end-of-life upstream. The PHP project states that configuration mitigations are incomplete and updating is the only complete fix."
+    else if {latest.response} matches "(?i)(?:X-Powered-By:[^\\r\\n]*\\bPHP\\b|Set-Cookie:[^\\r\\n]*\\bPHPSESSID=|PHP\\s+Version)" then
+        report issue:
+            severity: info
+            confidence: tentative
+            detail: "The response contains evidence of PHP, but no affected version was confirmed. Version hiding is common, so this does not establish that the server is safe."
+            remediation: "Run the companion local checker on the server or verify the installed package inventory against PHP 8.2.35, 8.3.36, 8.4.27, and 8.5.12."
+    end if
